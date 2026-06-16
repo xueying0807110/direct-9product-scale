@@ -314,9 +314,11 @@
     let pageOpenTime = new Date().toISOString();
     let buttonsShownTime = pageOpenTime;
     let buttonsEnabledTime = '';
+    let lastDisplayedImage = '';
 
     let totalClicks = 0;
     let optionClicks = 0;
+    let imageSwitches = 0;
     let addToCartClicks = 0;
     let leaveClicks = 0;
     let invalidButtonClicks = 0;
@@ -364,18 +366,24 @@
       productImage.src = option.dataset.image;
       productImage.alt = option.dataset.name;
       productImage.classList.add('is-visible');
+      lastDisplayedImage = option.dataset.image || '';
 
       if (!firstOptionClickTime) {
         firstOptionClickTime = new Date().toISOString();
       }
     }
 
-    function previewOption(option) {
+    function previewOption(option, countSwitch = false) {
       if (!option || !option.dataset.image) return;
+
+      if (countSwitch && lastDisplayedImage !== option.dataset.image) {
+        imageSwitches += 1;
+      }
 
       productImage.src = option.dataset.image;
       productImage.alt = option.dataset.name || '';
       productImage.classList.add('is-visible');
+      lastDisplayedImage = option.dataset.image;
     }
 
     function buildProductOptions() {
@@ -414,7 +422,7 @@
       const option = event.target.closest('.custom-option');
       if (!option) return;
 
-      previewOption(option);
+      previewOption(option, true);
     });
 
     optionList.addEventListener('focusin', (event) => {
@@ -466,6 +474,7 @@
         noBuyOptionChosen: '0',
         totalClicks: String(totalClicks),
         optionClicks: String(optionClicks),
+        imageSwitches: String(imageSwitches),
         addToCartClicks: String(addToCartClicks),
         leaveClicks: String(leaveClicks),
         invalidButtonClicks: String(invalidButtonClicks),
