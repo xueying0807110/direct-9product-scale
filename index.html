@@ -426,6 +426,15 @@
       previewOption(option, true);
     });
 
+    optionList.addEventListener('mouseleave', () => {
+      if (!selectedProductImage) return;
+
+      productImage.src = selectedProductImage;
+      productImage.alt = selectedProductName;
+      productImage.classList.add('is-visible');
+      lastDisplayedImage = selectedProductImage;
+    });
+
     optionList.addEventListener('focusin', (event) => {
       const option = event.target.closest('.custom-option');
       if (!option) return;
