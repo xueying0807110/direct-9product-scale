@@ -190,7 +190,8 @@
     }
 
     .decision-message {
-      display: none;
+      display: block;
+      visibility: hidden;
       margin: auto 0 12px;
       padding: 0;
       background: transparent;
@@ -201,7 +202,7 @@
     }
 
     .decision-message.is-visible {
-      display: block;
+      visibility: visible;
     }
 
     .button-row {
@@ -282,7 +283,7 @@
         </div>
       </div>
 
-      <div class="decision-message" id="decisionMessage">please click the option before adding it to cart</div>
+      <div class="decision-message" id="decisionMessage">please click the option before placing an order</div>
 
       <div class="button-row" id="buttonRow">
         <button class="button" type="button" data-action="add_to_cart" disabled>Place an order</button>
