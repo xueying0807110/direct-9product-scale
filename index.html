@@ -205,34 +205,6 @@
       visibility: visible;
     }
 
-    .time-warning {
-      position: fixed;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%) scale(0.98);
-      z-index: 999;
-      max-width: min(420px, calc(100% - 32px));
-      padding: 16px 20px;
-      border: 2px solid #111;
-      background: #fff;
-      color: #111;
-      font-size: 15px;
-      font-weight: 700;
-      line-height: 1.4;
-      text-align: center;
-      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22);
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
-      transition: opacity 120ms ease, visibility 120ms ease, transform 120ms ease;
-    }
-
-    .time-warning.is-visible {
-      opacity: 1;
-      visibility: visible;
-      transform: translate(-50%, -50%) scale(1);
-    }
-
     .button-row {
       display: grid;
       grid-template-columns: 1fr;
@@ -326,8 +298,6 @@
 
     </main>
 
-  <div class="time-warning" id="timeWarning" role="status" aria-live="polite">Please carefully review the products before continuing.</div>
-
   <script src="products.js"></script>
   <script>
     const productSelect = document.getElementById('productSelect');
@@ -335,7 +305,7 @@
     const productImage = document.getElementById('productImage');
     const buttonRow = document.getElementById('buttonRow');
     const decisionMessage = document.getElementById('decisionMessage');
-    const timeWarning = document.getElementById('timeWarning');
+    const continueButton = buttonRow.querySelector('.button');
 
     let selectedProductName = '';
     let selectedProductImage = '';
@@ -345,7 +315,11 @@
     let buttonsShownTime = pageOpenTime;
     let buttonsEnabledTime = '';
     let canContinue = false;
+    let countdownSeconds = 10;
     let lastDisplayedImage = '';
+    let totalOptionCount = 0;
+    let countdownTimer = null;
+    const reviewedOptions = new Set();
 
     let totalClicks = 0;
     let optionClicks = 0;
@@ -354,12 +328,6 @@
 
     document.addEventListener('click', () => {
       totalClicks += 1;
-    }, true);
-
-    document.addEventListener('click', (event) => {
-      if (!event.target.closest('.button')) {
-        hideTimeWarning();
-      }
     }, true);
 
     function shuffleArray(array) {
@@ -397,7 +365,6 @@
       selectedProductImage = option.dataset.image || '';
       selectedProductPrice = '$6.5';
       decisionMessage.classList.remove('is-visible');
-      hideTimeWarning();
 
       productImage.src = option.dataset.image;
       productImage.alt = option.dataset.name;
@@ -427,13 +394,15 @@
 
       const randomizedProducts = shuffleArray(window.PRODUCTS);
       optionList.innerHTML = '';
+      totalOptionCount = randomizedProducts.length;
 
-      randomizedProducts.forEach((product) => {
+      randomizedProducts.forEach((product, index) => {
         const option = document.createElement('li');
         option.className = 'custom-option';
         option.setAttribute('role', 'option');
         option.setAttribute('aria-selected', 'false');
         option.setAttribute('tabindex', '0');
+        option.dataset.index = String(index);
         option.dataset.name = product.name;
         option.dataset.image = product.image;
 
@@ -446,12 +415,22 @@
       });
     }
 
-    function showTimeWarning() {
-      timeWarning.classList.add('is-visible');
+    function enableContinue() {
+      if (canContinue) return;
+
+      canContinue = true;
+      buttonRow.classList.add('is-enabled');
+      buttonsEnabledTime = new Date().toISOString();
     }
 
-    function hideTimeWarning() {
-      timeWarning.classList.remove('is-visible');
+    function markOptionReviewed(option) {
+      if (!option || !option.dataset.index) return;
+
+      reviewedOptions.add(option.dataset.index);
+
+      if (totalOptionCount > 0 && reviewedOptions.size >= totalOptionCount) {
+        enableContinue();
+      }
     }
 
     optionList.addEventListener('click', (event) => {
@@ -459,6 +438,7 @@
       if (!option) return;
 
       optionClicks += 1;
+      markOptionReviewed(option);
       selectOption(option);
     });
 
@@ -466,7 +446,7 @@
       const option = event.target.closest('.custom-option');
       if (!option) return;
 
-      hideTimeWarning();
+      markOptionReviewed(option);
       previewOption(option, true);
     });
 
@@ -483,7 +463,7 @@
       const option = event.target.closest('.custom-option');
       if (!option) return;
 
-      hideTimeWarning();
+      markOptionReviewed(option);
       previewOption(option);
     });
 
@@ -495,6 +475,7 @@
 
       event.preventDefault();
       optionClicks += 1;
+      markOptionReviewed(option);
       selectOption(option);
     });
 
@@ -505,7 +486,6 @@
       const action = button.dataset.action || '';
       if (!canContinue) {
         invalidButtonClicks += 1;
-        showTimeWarning();
         return;
       }
 
@@ -531,10 +511,25 @@
 
     preloadImages();
     buildProductOptions();
-    window.setTimeout(() => {
-      canContinue = true;
-      buttonsEnabledTime = new Date().toISOString();
-    }, 10000);
+
+    function updateContinueButton() {
+      continueButton.textContent = countdownSeconds > 0 ? `Continue (${countdownSeconds}s)` : 'Continue';
+    }
+
+    updateContinueButton();
+    countdownTimer = window.setInterval(() => {
+      countdownSeconds -= 1;
+
+      if (countdownSeconds <= 0) {
+        window.clearInterval(countdownTimer);
+        countdownSeconds = 0;
+        enableContinue();
+        updateContinueButton();
+        return;
+      }
+
+      updateContinueButton();
+    }, 1000);
   </script>
 </body>
 </html>
